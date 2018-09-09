@@ -11,35 +11,6 @@ const option = {
 
 const consulIns = consul(option);
 
-const registerExitHandler = (callback) => {
-    const exit = (signal) => {
-      callback = callback || (() => {});
-      callback();
-      setTimeout(function() {
-        process.exit(signal);
-      }, 500);
-    };
-
-    process.on('exit', function () {
-      console.log('process will exit !!!!!!!!')
-    });
-
-    process.on('SIGTERM', function() {
-      console.log('SIGTERM');
-      exit(1);
-    });
-
-    process.on('SIGINT', function () {
-      console.log('Ctrl-C...');
-      exit(2);
-    });
-
-    process.on('uncaughtException', function(e) {
-      console.error('Uncaught Exception', e.stack);
-      exit(3);
-    });
-  };
-
 app.use(async(ctx) => {
     return ctx.body = {
         name: process.env.ID,
@@ -54,14 +25,6 @@ server.on('error', (error) => {
     process.exit(1);
 });
 server.on('listening', async() => {
-  registerExitHandler(() => {
-    consulIns.agent.service.deregister({id: process.env.ID}, (err) => {
-      if (err) {
-        return console.error(`${process.env.ID} - consul 撤销登记失败: `, err);
-      }
-      console.log(`${process.env.ID} - consul 撤销登记成功...`);
-    });
-  });
   console.log(`${process.env.ID} - service working on ${process.env.PORT}`);
   const intervalIns = setInterval(async () => {
     console.log(`${process.env.ID} - 正在等待 consul 集群启动和 leader 选举...`);
@@ -97,6 +60,11 @@ server.on('listening', async() => {
         console.log(`${process.env.ID} - healthService list: `, healthServiceList);
         console.log('-------------------------------------------------');
       }, 5000);
+      console.log('60秒后，模拟程序异常退出...');
+      setTimeout(() => {
+        console.log('程序异常退出...');
+        process.exit(1)
+      }, 60000)
     }
   }, 3000);
 });
