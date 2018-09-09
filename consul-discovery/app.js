@@ -65,7 +65,12 @@ server.on('listening', async() => {
   console.log(`${process.env.ID} - service working on ${process.env.PORT}`);
   const intervalIns = setInterval(async () => {
     console.log(`${process.env.ID} - 正在等待 consul 集群启动和 leader 选举...`);
-    const leader = await consulIns.status.leader();
+    let leader = null;
+    try {
+      leader = await consulIns.status.leader();
+    } catch (e) {
+      // do nothing
+    }
     if (leader) {
       clearInterval(intervalIns);
       console.log(`${process.env.ID} - consul 集群启动且leader选举完成，leader: `, leader);

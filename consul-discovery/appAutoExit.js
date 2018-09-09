@@ -28,7 +28,12 @@ server.on('listening', async() => {
   console.log(`${process.env.ID} - service working on ${process.env.PORT}`);
   const intervalIns = setInterval(async () => {
     console.log(`${process.env.ID} - 正在等待 consul 集群启动和 leader 选举...`);
-    const leader = await consulIns.status.leader();
+    let leader = null;
+    try {
+      leader = await consulIns.status.leader();
+    } catch (e) {
+      // do nothing
+    }
     if (leader) {
       clearInterval(intervalIns);
       console.log(`${process.env.ID} - consul 集群启动且leader选举完成，leader: `, leader);
@@ -60,11 +65,11 @@ server.on('listening', async() => {
         console.log(`${process.env.ID} - healthService list: `, healthServiceList);
         console.log('-------------------------------------------------');
       }, 5000);
-      console.log('60秒后，模拟程序异常退出...');
+      console.log('120 秒后，模拟程序异常退出...');
       setTimeout(() => {
         console.log('程序异常退出...');
         process.exit(1)
-      }, 60000)
+      }, 120000)
     }
   }, 3000);
 });
