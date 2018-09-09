@@ -1,47 +1,63 @@
-version: '3.0'
+version: '3'
 
 services:
-  consulserver:
-    image: progrium/consul:latest
-    hostname: consulserver
+
+  consul-agent-1: &consul-agent
+    image: consul:latest
+    networks:
+      - consul-demo
+    command: "agent -retry-join consul-server-bootstrap -ui -client 0.0.0.0"
+
+  consul-agent-2:
+    <<: *consul-agent
+
+  consul-agent-3:
+    <<: *consul-agent
+
+  consul-server-1: &consul-server
+    <<: *consul-agent
+    command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
+
+  consul-server-2:
+    <<: *consul-server
+
+  consul-server-bootstrap:
+    <<: *consul-agent
     ports:
-      - "8300"
-      - "8400"
+      - "8400:8400"
       - "8500:8500"
-    command: -server -ui-dir /ui -data-dir /tmp/consul --bootstrap
-  web1:
+      - "8600:8600"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0"
+  koa1:
     build: .
     command: node app.js
+    networks:
+      - consul-demo
     ports:
       - "3000:3000"
     volumes:
       - .:/opt/app
     depends_on:
-      - consulserver
+      - consul-server-bootstrap
     environment:
       - ID=koa1
       - PORT=3000
-  web2:
+      - AGENT=consul-agent-1
+  koa2:
     build: .
     command: node app.js
+    networks:
+      - consul-demo
     ports:
       - "4000:4000"
     volumes:
       - .:/opt/app
     depends_on:
-      - consulserver
+      - consul-server-bootstrap
     environment:
       - ID=koa2
       - PORT=4000
-  web3:
-    build: .
-    command: node app.js
-    ports:
-      - "5000:5000"
-    volumes:
-      - .:/opt/app
-    depends_on:
-      - consulserver
-    environment:
-      - ID=koa3
-      - PORT=5000
+      - AGENT=consul-agent-2
+networks:
+  consul-demo:

@@ -4,7 +4,7 @@ const Koa = require('koa');
 const app = new Koa();
 
 const option = {
-  host: 'consulserver',
+  host: process.env.AGENT,
   port: 8500,
   promisify: true
 };
@@ -57,27 +57,41 @@ server.on('listening', async() => {
   registerExitHandler(() => {
     consulIns.agent.service.deregister({id: process.env.ID}, (err) => {
       if (err) {
-        return console.error('consul 撤销登记失败: ', err);
+        return console.error(`${process.env.ID} - consul 撤销登记失败: `, err);
       }
-      console.log('consul 撤销登记成功');
+      console.log(`${process.env.ID} - consul 撤销登记成功...`);
     });
   });
-  console.log('service workding on 3000');
-
-  const leader = await consulIns.status.leader();
-  console.log('consul leader: ', leader);
-
-  // const nodeList = await consulIns.catalog.node.list();
-  // console.log('node list:', nodeList)
-  // 注册
-  await consulIns.agent.service.register({
-    id: process.env.ID,
-    name: 'koa',
-    address: '127.0.0.1',
-    port: parseInt(process.env.PORT)
-  });
-  const serviceList = await consulIns.agent.service.list();
-  console.log('service list: ', serviceList)
-  const catalogServiceList = await consulIns.catalog.service.list();
-  console.log('catalogServiceList list: ', catalogServiceList)
+  console.log(`${process.env.ID} - service working on ${process.env.PORT}`);
+  const intervalIns = setInterval(async () => {
+    console.log(`${process.env.ID} - 正在等待 consul 集群启动和 leader 选举...`);
+    const leader = await consulIns.status.leader();
+    if (leader) {
+      clearInterval(intervalIns);
+      console.log(`${process.env.ID} - consul 集群启动且leader选举完成，leader: `, leader);
+      console.log(`${process.env.ID} - 开始注册服务...`);
+      // 注册
+      await consulIns.agent.service.register({
+        id: process.env.ID,
+        name: 'koa',
+        address: '127.0.0.1',
+        port: parseInt(process.env.PORT),
+        check: {
+          id: `${process.env.ID}-check`,
+          http: `http://${process.env.ID}:${process.env.PORT}`,
+          interval: '10s',
+          timeout: '5s',
+          deregistercriticalserviceafter: '1m'
+        }
+      });
+      setInterval(async () => {
+        console.log(`${process.env.ID} - 开始每隔 5s 重新查询一次服务列表...`);
+        const catalogServiceList = await consulIns.catalog.service.list();
+        console.log(`${process.env.ID} - catalogService list: `, catalogServiceList);
+        const serviceNodeList = await consulIns.catalog.service.nodes('koa');
+        console.log(`${process.env.ID} - serviceNodeList list: `, serviceNodeList);
+        console.log('-------------------------------------------------');
+      }, 5000);
+    }
+  }, 3000);
 });
