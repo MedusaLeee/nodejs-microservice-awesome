@@ -8,7 +8,5 @@
 
 ### TODO
 
-#### consul-discovery
-
-* `consul`集群同步
-* `resilient`中`roundRobin`方式会导致应用崩溃的问题
+* 通过`Registrator`进行`docker`容器监控来进行服务注册
+* 完善客户端负载均衡器，如缓存策略，轮训策略等
