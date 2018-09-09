@@ -18,14 +18,14 @@ const registerExitHandler = (callback) => {
       setTimeout(function() {
         process.exit(signal);
       }, 500);
-    }
+    };
 
     process.on('exit', function () {
       console.log('process will exit !!!!!!!!')
     });
 
     process.on('SIGTERM', function() {
-      console.log('SIGTERM')
+      console.log('SIGTERM');
       exit(1);
     });
 
@@ -50,8 +50,8 @@ app.use(async(ctx) => {
 const server = http.createServer(app.callback());
 server.listen(process.env.PORT);
 server.on('error', (error) => {
-    console.error('error: ', error)
-    process.exit(1)
+    console.error('error: ', error);
+    process.exit(1);
 });
 server.on('listening', async() => {
   registerExitHandler(() => {
@@ -59,13 +59,13 @@ server.on('listening', async() => {
       if (err) {
         return console.error('consul 撤销登记失败: ', err);
       }
-      console.log('consul 撤销登记成功')
+      console.log('consul 撤销登记成功');
     });
   });
-  console.log('service workding on 3000')
+  console.log('service workding on 3000');
 
   const leader = await consulIns.status.leader();
-  console.log('consul leader: ', leader)
+  console.log('consul leader: ', leader);
 
   // const nodeList = await consulIns.catalog.node.list();
   // console.log('node list:', nodeList)
@@ -81,6 +81,3 @@ server.on('listening', async() => {
   const catalogServiceList = await consulIns.catalog.service.list();
   console.log('catalogServiceList list: ', catalogServiceList)
 });
-
-
-// TODO 服务注册  和 客户端负载均衡  docker compose 进程 后台运行

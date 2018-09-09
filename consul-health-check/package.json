@@ -1,5 +1,5 @@
 {
-  "name": "consul-discovery",
+  "name": "consul-health-check",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

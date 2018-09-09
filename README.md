@@ -3,7 +3,8 @@
 
 ### Guides
 
-* [consul-discovery consul服务发现及客户端负载均衡](./consul-discovery)
+* [consul-health-check:consul服务健康检查](./consul-discovery)
+* [consul-discovery:consul服务发现及客户端负载均衡](./consul-discovery)
 
 ### TODO
 
